@@ -7,8 +7,13 @@ const {
 } = require("discord.js");
 const { handleMessage } = require("./SpamHandeler.js");
 const { InviteMon } = require("./ServerInviteMon.js");
+const express = require("express");
 
 require("dotenv").config();
+
+const app = express();
+
+const port = process.env.Port || 3000;
 
 const client = new Client({
   intents: [
@@ -116,4 +121,12 @@ client.on("messageCreate", async (message) => {
     TIME_WINDOW,
     TIMEOUT_DURATION
   );
+});
+
+app.get("/", (req, res) => {
+  res.send("bot is running");
+});
+
+app.listen(port, () => {
+  console.log(`fuck you htttp request on port ${port}`);
 });
