@@ -5,14 +5,13 @@ const {
   REST,
   Routes,
   Events,
-  italic,
 } = require("discord.js");
 const { handleMessage } = require("./SpamHandeler.js");
 const { InviteMon } = require("./ServerInviteMon.js");
 const express = require("express");
 
 const { handleAnnounceCommand } = require("./annoucmentHandeler.js");
-const { handleInteraction } = require("../ReportSystem.js");
+const { handleInteraction } = require("./ReportSystem.js");
 
 require("dotenv").config();
 
