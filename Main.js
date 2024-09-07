@@ -122,7 +122,7 @@ client.on("interactionCreate", async (interaction) => {
     await BanCommand(interaction, Mod_Role_ID, LOG_CHANNEL_ID);
   }
 });
-client.on(Events.InteractionCreate, handleInteraction);
+client.on(Events.InteractionCreate, handleInteraction, Mod_Role_ID);
 
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isCommand()) return;

@@ -14,7 +14,10 @@ module.exports = async (interaction, Mod_Role_ID, Log_Channel_ID) => {
   try {
     const member = await interaction.guild.members.fetch(user.id);
     await member.ban({ reason });
-    await interaction.reply({ content: `banned ${user.tag} for ${reason}` });
+    await interaction.reply({
+      content: `banned ${user.tag} for ${reason}`,
+      ephemeral: true,
+    });
     const LogChannel = interaction.guild.channel.cache.get(Log_Channel_ID);
     if (LogChannel) {
       await LogChannel.send({

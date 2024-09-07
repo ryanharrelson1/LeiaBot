@@ -3,7 +3,7 @@ const reports = {};
 const Report_Channel_ID = "1281039175411433515";
 
 module.exports = {
-  handleInteraction: async (interaction) => {
+  handleInteraction: async (interaction, Mod_Role_ID) => {
     if (!interaction.isCommand()) return;
 
     const { commandName, options } = interaction;
