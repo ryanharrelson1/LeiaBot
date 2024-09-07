@@ -119,7 +119,7 @@ client.on("interactionCreate", async (interaction) => {
   const { commandName } = interaction;
 
   if (commandName === "ban") {
-    await BanCommand(interaction, Mod_Role_ID);
+    await BanCommand(interaction, Mod_Role_ID, LOG_CHANNEL_ID);
   }
 });
 client.on(Events.InteractionCreate, handleInteraction);
