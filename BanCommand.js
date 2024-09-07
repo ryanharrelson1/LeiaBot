@@ -1,5 +1,6 @@
 module.exports = async (interaction, Mod_Role_ID, Log_Channel_ID) => {
   const modRole = interaction.guild.roles.cache;
+  const options = interaction.options;
   if (!modRole.has(Mod_Role_ID)) {
     return interaction.reply({
       content: "you dont have permisson to ban users",
