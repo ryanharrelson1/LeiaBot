@@ -1,7 +1,5 @@
 const Genral_CHannel_ID = "1279629109231747125";
 
-const ANNounce_CHannel_ID = "1279677755922976890";
-
 const handleAnnounceCommand = async (interaction) => {
   const announcementMessage = interaction.options.getString("message");
   const generalChannel =
