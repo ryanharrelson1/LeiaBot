@@ -13,15 +13,13 @@ const express = require("express");
 const { handleAnnounceCommand } = require("./annoucmentHandeler.js");
 const { handleInteraction } = require("./ReportSystem.js");
 const BanCommand = require("./BanCommand.js");
-const { default: ConnectDb } = require("./mongoDb/mongoDb.js");
+const ConnectDb = require("./mongoDb/mongoDb.js");
 
 require("dotenv").config();
 
 const app = express();
 
 const port = process.env.Port || 3000;
-
-ConnectDb();
 
 const client = new Client({
   intents: [
@@ -90,7 +88,7 @@ const commands = [
   new SlashCommandBuilder()
     .setName("setbirthday")
     .setDescription("set your birthday (MM-DD format")
-    .addStringOption((opn) =>
+    .addStringOption((option) =>
       option
         .setName("date")
         .setDescription("enter your birhtday in MM-DD format")
@@ -166,5 +164,6 @@ app.get("/", (req, res) => {
 });
 
 app.listen(port, () => {
+  ConnectDb();
   console.log(`fuck you htttp request on port ${port}`);
 });

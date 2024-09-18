@@ -9,4 +9,4 @@ const ConnectDb = async () => {
   }
 };
 
-export default ConnectDb;
+module.exports = ConnectDb;
