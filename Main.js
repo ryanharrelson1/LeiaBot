@@ -14,6 +14,7 @@ const { handleAnnounceCommand } = require("./annoucmentHandeler.js");
 const { handleInteraction } = require("./ReportSystem.js");
 const BanCommand = require("./BanCommand.js");
 const ConnectDb = require("./mongoDb/mongoDb.js");
+const Birthday = require("./mongoDb/MongoModel/bdayModel.js")
 
 require("dotenv").config();
 
@@ -37,6 +38,8 @@ const TIME_WINDOW = 3000; // 3 seconds
 const TIMEOUT_DURATION = 60 * 1000; // 1 minute
 const Client_ID = "1279621099193368699";
 const Guild_ID = "782864366763900948";
+const BirthDayRole = "1286431218614796359";
+const generalChannelId = "944716095531671552";
 
 const commands = [
   new SlashCommandBuilder()
@@ -114,6 +117,7 @@ const rest = new REST({ version: "10" }).setToken(Token);
 
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
+  CheckBirhtday();
 });
 
 client.login(Token);
@@ -158,6 +162,79 @@ client.on("messageCreate", async (message) => {
     TIMEOUT_DURATION
   );
 });
+
+client.on("interactionCreate", async (interaction) =>{
+  if(!interaction.isCommand()) return;
+
+  if(interaction.commandName === "setbirthday")
+    {
+      const birthday = interaction.option.getString("date");
+      const userId = interaction.user.id;
+
+      if(!/^\d{2}-\d{2}$/.test(birthday)){
+        return interaction.reply({
+          content: "invalid date format pls try again",
+          ephemeral: true
+        })
+      }
+
+      try {
+        await Birthday.findOneAndUpdate(
+          {userId: userId},
+          {birthday: birthday},
+          {upsert: true}
+        );
+        interaction.reply({
+          content: `your birthdaty has been set to ${birthday}`,
+          ephemeral: true
+          
+        
+        })
+        
+      } catch (error) {
+        console.log("there was an error in saving your birthday", error);
+        interaction.reply({
+          content: "there was an error in saving your bday",
+          ephemeral: true
+          
+        })
+      }
+    }
+
+    async function CheckBirhtday() {
+      const today = new Date().toISOString().slice(5,10);
+
+      try {
+        const usersWithBirthdayToday = await Birthday.find({birthday: today});
+        const guild = client.guilds.cache.get(Guild_ID);
+
+        usersWithBirthdayToday.forEach(async user => {
+          const member = guild.members.cache.get(user.userId);
+          if(member){
+            const birhtdayRole = guild.roles.cache.get(BirthDayRole);
+            if(birhtdayRole)
+              {
+                await member.roles.add(BirthDayRole)
+                const generalChannel = guild.channels.cache.get(generalChannelId)
+                generalChannel.send(`Happy Birthday <@${user.userId}>! Enjoy Your special Birthday role!`)
+                setTimeout(() => {
+                  member.roles.remove(birhtdayRole);
+                }, 86400000);
+              }
+          }
+        });
+        
+      } catch (error) {
+        console.error("error in checking birhtdays")
+      }
+      setTimeout(CheckBirhtday, 86400000);
+    }
+
+
+    
+
+
+})
 
 app.get("/", (req, res) => {
   res.send("Bot is running");
