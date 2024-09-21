@@ -1,10 +1,14 @@
 const mongoose = require("mongoose");
 
 const birthdaySchema = new mongoose.Schema({
-  userID: { type: String, required: true, unique: true },
-  birthday: { type: String, required: true },
+  userId: {
+    type: String,
+    required: true,
+  },
+  birthday: {
+    type: String,
+    required: true,
+  },
 });
 
-const Bday = mongoose.model("Bday", birthdaySchema);
-
-export default Bday;
+module.exports = mongoose.model("Birthday", birthdaySchema);
