@@ -203,7 +203,8 @@ client.on("messageCreate", async (message) => {
     user.FroggieBalance = (user.FroggieBalance || 0) + FroggieRewards;
 
     message.channel.send(
-      `${message.author.username} leveled up to level ${newLevel} and earned ${FroggieRewards} Froggies🐸.`
+      ` congrats${message.author.username} you leveled up to level ${newLevel} you now own ${FroggieRewards} frogs ! :frogyippee: •°. *࿐
+`
     );
   }
   user.xp = newXP;
