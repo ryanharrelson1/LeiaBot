@@ -5,6 +5,7 @@ const {
   REST,
   Routes,
   Events,
+  Collection,
 } = require("discord.js");
 const { handleMessage } = require("./SpamHandeler.js");
 const { InviteMon } = require("./ServerInviteMon.js");
@@ -15,6 +16,9 @@ const { handleInteraction } = require("./ReportSystem.js");
 const BanCommand = require("./BanCommand.js");
 const ConnectDb = require("./mongoDb/mongoDb.js");
 const Birthday = require("./mongoDb/MongoModel/bdayModel.js");
+const { setBirthday, CheckBirhtday } = require("./bdayHandeler.js");
+
+const Users = require("./mongoDb/MongoModel/chatuserModel.js");
 
 require("dotenv").config();
 
@@ -40,6 +44,12 @@ const Client_ID = "1279621099193368699";
 const Guild_ID = "782864366763900948";
 const BirthDayRole = "1286431218614796359";
 const generalChannelId = "944716095531671552";
+const Xp_Per_Message = 10;
+const Xp_CoolDown = 60 * 1000;
+const xpCooldowns = new Collection();
+const Super_Froggies_Role_ID = "1288632533717880832";
+const Master_Froggie_Role_ID = "1288633108312096890";
+const Froggie_Role_ID = "782900478265524245";
 
 const commands = [
   new SlashCommandBuilder()
@@ -117,7 +127,7 @@ const rest = new REST({ version: "10" }).setToken(Token);
 
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
-  CheckBirhtday();
+  CheckBirhtday(client, Guild_ID);
 });
 
 client.login(Token);
@@ -151,86 +161,166 @@ client.on("messageCreate", async (message) => {
   await InviteMon(message, INVITE_REGEX, LOG_CHANNEL_ID); // Pass the constants to the function
 });
 
-client.on("messageCreate", async (message) => {
-  if (!message.guild || message.author.bot) return;
-
-  await handleMessage(
-    message,
-    LOG_CHANNEL_ID,
-    SPAM_LIMIT,
-    TIME_WINDOW,
-    TIMEOUT_DURATION
-  );
-});
-
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isCommand()) return;
-
   if (interaction.commandName === "setbirthday") {
-    const birthday = interaction.options.getString("date");
-    const userId = interaction.user.id;
+    await setBirthday(interaction, Guild_ID, generalChannelId, BirthDayRole);
+  }
+});
 
-    if (!/^\d{2}-\d{2}$/.test(birthday)) {
-      return interaction.reply({
-        content: "Invalid date format, please try again (MM-DD format).",
-        ephemeral: true,
-      });
+CheckBirhtday(client, Guild_ID);
+
+function getNextLevelXP(level) {
+  return 100 * level ** 2;
+}
+
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+
+  const userId = message.author.id;
+
+  const now = Date.now();
+  if (xpCooldowns.has(userId) && now - xpCooldowns.get(userId) < Xp_CoolDown) {
+    return;
+  }
+
+  xpCooldowns.set(userId, now);
+
+  let user = await Users.findOneAndUpdate(
+    { userID: userId },
+    { $setOnInsert: { xp: 0, level: 1 } },
+    { new: true, upsert: true }
+  );
+
+  let newXP = user.xp + Xp_Per_Message;
+  let newLevel = user.level;
+
+  if (newXP >= getNextLevelXP(newLevel)) {
+    newLevel++;
+    newXP = 0;
+
+    const FroggieRewards = Math.floor(0.1 * getNextLevelXP(newLevel - 1));
+    user.FroggieBalance = (user.FroggieBalance || 0) + FroggieRewards;
+
+    message.channel.send(
+      `${message.author.username} leveled up to level ${newLevel} and earned ${FroggieRewards} Froggies🐸.`
+    );
+  }
+  user.xp = newXP;
+  user.level = newLevel;
+  await user.save();
+});
+client.on("messageCreate", async (message) => {
+  if (message.content.startsWith("!rank")) {
+    const userId = message.author.id;
+
+    const user = await Users.findOne({ userID: userId });
+
+    if (!user) {
+      return message.channel.send("you have not earned any XP yet");
     }
 
-    try {
-      await Birthday.findOneAndUpdate(
-        { userId: userId },
-        { birthday: birthday },
-        { upsert: true }
+    if (user.isPrestigeMaster) {
+      message.channel.send(
+        `${message.author.username}, you are a **Prestige Master**! 🏆`
       );
-      interaction.reply({
-        content: `Your birthday has been set to ${birthday}`,
-        ephemeral: true,
-      });
-    } catch (error) {
-      console.log("Error in saving your birthday", error);
-      interaction.reply({
-        content: "There was an error saving your birthday.",
-        ephemeral: true,
-      });
+    } else {
+      message.channel.send(
+        `${message.author.username}, you are level ${user.level} with ${user.xp} XP. Total Prestiges: ${user.prestigeCount}.`
+      );
     }
   }
 });
 
-// Move the CheckBirhtday function outside the event handler
-async function CheckBirhtday() {
-  const today = new Date().toLocaleString("en-CA", {
-    month: "2-digit",
-    day: "2-digit",
-  });
+client.on("messageCreate", async (message) => {
+  if (message.content.startsWith("!leaderboard")) {
+    // Fetch all users and sort them
+    const allUsers = await Users.find();
 
-  try {
-    const usersWithBirthdayToday = await Birthday.find({ birthday: today });
-
-    const guild = client.guilds.cache.get(Guild_ID);
-
-    usersWithBirthdayToday.forEach(async (user) => {
-      member = await guild.members.fetch(user.userId);
-
-      if (member) {
-        const birhtdayRole = guild.roles.cache.get(BirthDayRole);
-        if (birhtdayRole) {
-          await member.roles.add(BirthDayRole);
-          const generalChannel = guild.channels.cache.get(generalChannelId);
-          generalChannel.send(
-            `Happy Birthday <@${user.userId}>! Enjoy Your special Birthday role!`
-          );
-          setTimeout(() => {
-            member.roles.remove(birhtdayRole);
-          }, 86400000); // Remove the role after 24 hours
-        }
-      }
+    // Sort by isPrestigeMaster first, then prestigeCount, then level, and finally XP
+    const sortedUsers = allUsers.sort((a, b) => {
+      if (a.isPrestigeMaster && !b.isPrestigeMaster) return -1; // Prestige Masters first
+      if (!a.isPrestigeMaster && b.isPrestigeMaster) return 1;
+      if (a.prestigeCount !== b.prestigeCount)
+        return b.prestigeCount - a.prestigeCount; // Then by prestige count
+      if (a.level !== b.level) return b.level - a.level; // Then by level
+      return b.xp - a.xp; // Finally by XP
     });
-  } catch (error) {
-    console.error("Error in checking birthdays", error);
+
+    // Generate leaderboard string
+    let leaderboard = "🏆 **Leaderboard** 🏆\n";
+    for (let i = 0; i < sortedUsers.length; i++) {
+      const user = sortedUsers[i];
+      const discordUser = await client.users.fetch(user.userID);
+
+      if (user.isPrestigeMaster) {
+        leaderboard += `${i + 1}. ${
+          discordUser.username
+        } - Prestige Master 🏆\n`;
+      } else {
+        leaderboard += `${i + 1}. ${discordUser.username} - Level ${
+          user.level
+        }, ${user.xp} XP, Prestiges: ${user.prestigeCount}\n`;
+      }
+    }
+
+    message.channel.send(leaderboard);
   }
-  setTimeout(CheckBirhtday, 86400000); // Schedule the next check for the next day
-}
+});
+
+client.on("messageCreate", async (message) => {
+  if (message.content.startsWith("!prestige")) {
+    const userId = message.author.id;
+    const guild = message.guild;
+    const member = guild.members.cache.get(userId);
+
+    const user = await Users.findOne({ userID: userId });
+
+    if (!user) {
+      return message.channel.send("You haven't earned any XP yet.");
+    }
+    if (user.level < 10) {
+      return message.channel.send("you have to reach level 10 to prestige.");
+    }
+
+    user.level = 1;
+    user.xp = 0;
+    user.prestigeCount++;
+
+    if (user.prestigeCount >= 10) {
+      user.isPrestigeMaster = true;
+      if (!member.roles.cache.has(Master_Froggie_Role_ID)) {
+        await member.roles.add(Master_Froggie_Role_ID);
+        await message.channel.send(
+          `${message.author.username}, has became a Master Froggie  🐸`
+        );
+      }
+      if (member.roles.cache.has(Super_Froggies_Role_ID)) {
+        await member.roles.remove(Super_Froggies_Role_ID);
+      }
+    } else if (user.prestigeCount >= 5) {
+      if (!member.roles.cache.has(Super_Froggies_Role_ID)) {
+        await member.roles.add(Super_Froggies_Role_ID);
+        await message.channel.send(
+          `${message.author.username}, has became a **Super Froggie**! 🐸`
+        );
+      }
+      if (member.roles.cache.has(Froggie_Role_ID)) {
+        await member.roles.remove(Froggie_Role_ID);
+      }
+    }
+    await user.save();
+    if (user.isPrestigeMaster) {
+      message.channel.send(
+        `${message.author.username} has reached Prestige Master! 🏆`
+      );
+    } else {
+      message.channel.send(
+        `${message.author.username} has prestiged! You are now level ${user.level} with ${user.xp} XP. Total Prestiges: ${user.prestigeCount}.`
+      );
+    }
+  }
+});
 
 app.get("/", (req, res) => {
   res.send("Bot is running");
