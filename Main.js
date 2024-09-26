@@ -146,6 +146,17 @@ client.on("interactionCreate", async (interaction) => {
     await BanCommand(interaction, Mod_Role_ID, LOG_CHANNEL_ID);
   }
 });
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+  await handleMessage(
+    message,
+    LOG_CHANNEL_ID, // This should be first (logChannelId)
+    SPAM_LIMIT, // spamLimit
+    TIME_WINDOW, // timeWindow
+    TIMEOUT_DURATION // timeoutDuration
+  );
+});
+
 client.on(Events.InteractionCreate, handleInteraction, Mod_Role_ID);
 
 client.on("interactionCreate", async (interaction) => {
