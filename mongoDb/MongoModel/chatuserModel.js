@@ -9,9 +9,9 @@ const UserSchema = new mongoose.Schema({
   FroggieBalance: { type: Number, default: 0 },
   isPrestigeMaster: { type: Boolean, default: false },
 
-  activeXPBoost: {
-    multiplier: { type: Number, default: 1 }, // XP multiplier (e.g., 2 for double XP)
-    expiry: { type: Date, default: null }, // Expiry date for the boost
+  purchasedRole: {
+    roleID: { type: String, default: null }, // Role ID the user purchased
+    expiry: { type: Date, default: null }, // Expiry date for the purchased role
   },
 });
 

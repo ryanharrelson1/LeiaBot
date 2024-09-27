@@ -15,7 +15,7 @@ const { handleAnnounceCommand } = require("./annoucmentHandeler.js");
 const { handleInteraction } = require("./ReportSystem.js");
 const BanCommand = require("./BanCommand.js");
 const ConnectDb = require("./mongoDb/mongoDb.js");
-const Birthday = require("./mongoDb/MongoModel/bdayModel.js");
+
 const { setBirthday, CheckBirhtday } = require("./bdayHandeler.js");
 
 const Users = require("./mongoDb/MongoModel/chatuserModel.js");
@@ -315,20 +315,24 @@ client.on("messageCreate", async (message) => {
     { $setOnInsert: { xp: 0, level: 1 } },
     { new: true, upsert: true }
   );
+  // role expire check
+  if (user.purchasedRole && now >= user.purchasedRole.expiry) {
+    const role = message.guild.roles.cache.get(user.purchasedRole.roleID);
+    const guildMember = message.guild.members.cache.get(userId);
+
+    if (role && guildMember) {
+      await guildMember.roles.remove(role);
+    }
+
+    user.purchasedRole = null;
+    await user.save();
+  }
 
   // Default XP per message
   let xpGain = Xp_Per_Message;
 
-  // Apply XP boost if active
-  if (user.activeXPBoost && now < user.activeXPBoost.expiry) {
-    xpGain *= user.activeXPBoost.multiplier; // Apply XP multiplier boost
-  } else if (user.activeXPBoost && now >= user.activeXPBoost.expiry) {
-    user.activeXPBoost = null; // Remove boost if expired
-    await user.save();
-  }
-
   // Apply the XP gain (use xpGain with multiplier)
-  let newXP = user.xp + xpGain;
+  let newXP = xpGain;
   let newLevel = user.level;
 
   // Check if user leveled up
@@ -352,81 +356,84 @@ client.on("messageCreate", async (message) => {
   await user.save();
 });
 
-const shopItem = [
+const shopRoles = [
   {
-    name: "Double XP (10 mins)",
-    type: "XpBoost",
-    multiplier: 2,
-    duration: 10 * 60 * 1000,
-    price: 100,
+    name: "Pink-Color", // Role name
+    roleID: "1289272630050033704",
+    price: 300, // Froggie price
+    duration: 7 * 24 * 60 * 60 * 1000, // 1 week in milliseconds
   },
   {
-    name: "Double XP (30 mins)",
-    type: "XpBoost",
-    multiplier: 2,
-    duration: 30 * 60 * 1000,
-    price: 300,
-  },
-  {
-    name: "Triple XP (30 mins)",
-    type: "XpBoost",
-    multiplier: 3,
-    duration: 30 * 60 * 1000,
+    name: "Gold_color",
+    roleID: "1289272493571444756",
     price: 500,
+    duration: 7 * 24 * 60 * 60 * 1000, // 1 week
+  },
+  {
+    name: "Purple-Color",
+    roleID: "1289272348910026803",
+    price: 1000,
+    duration: 7 * 24 * 60 * 60 * 1000, // 1 week
   },
 ];
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  // Split message content by spaces, not empty string
+  // Split message content by spaces to extract command and arguments
   const args = message.content.split(" ");
   const command = args[0].toLowerCase();
 
   if (command === "!buy") {
-    const itemName = args.slice(1).join(" ");
-    const item = shopItem.find(
-      (i) => i.name.toLowerCase() === itemName.toLowerCase()
+    const roleName = args.slice(1).join(" ");
+    const roleToBuy = shopRoles.find(
+      (r) => r.name.toLowerCase() === roleName.toLowerCase()
     );
 
-    if (!item) {
+    if (!roleToBuy) {
       return message.channel.send(
-        `${message.author.username}, the item "${itemName}" does not exist in the shop.`
+        `${message.author.username}, the role "${roleName}" does not exist in the shop.`
       );
     }
 
     const userId = message.author.id;
     let user = await Users.findOne({ userID: userId });
 
-    // Check if user exists and has enough balance
-    if (!user || user.FroggieBalance < item.price) {
+    // Check if user exists and has enough Froggie balance to purchase the role
+    if (!user || user.FroggieBalance < roleToBuy.price) {
       return message.channel.send(
-        `You do not have enough Froggies to buy the item "${item.name}".`
+        `You do not have enough Froggies to buy the role "${roleToBuy.name}".`
       );
     }
 
-    // Deduct item price from the user's balance
-    user.FroggieBalance -= item.price;
+    // Deduct Froggie balance from the user's account
+    user.FroggieBalance -= roleToBuy.price;
 
-    // If it's an XP boost, activate the boost with duration and multiplier
-    if (item.type === "XpBoost") {
-      const boostExpire = Date.now() + item.duration; // Use correct spelling for "duration"
-      user.activeXPBoost = {
-        multiplier: item.multiplier, // Use correct spelling for "multiplier"
-        expiry: boostExpire,
-      };
+    // Calculate role expiration time (duration is in milliseconds)
+    const roleExpire = Date.now() + roleToBuy.duration;
 
-      await user.save(); // Save user with updated XP boost info
+    // Store the purchased role and its expiration
+    user.purchasedRole = {
+      roleID: roleToBuy.roleID, // Store the role's ID
+      expiry: roleExpire,
+    };
 
-      message.channel.send(
-        `${message.author.username}, your ${
-          item.name
-        } has been activated and will expire in ${
-          item.duration / 1000 / 60
-        } minutes.`
+    // Find the Discord role by ID and assign it to the user
+    const guildMember = message.guild.members.cache.get(message.author.id);
+    const role = message.guild.roles.cache.get(roleToBuy.roleID); // Find role by ID
+
+    if (!role) {
+      return message.channel.send(
+        `The role "${roleToBuy.name}" was not found in the server. Please contact an admin.`
       );
-    } else {
-      await user.save(); // Just save user if it's not an XP boost
     }
+
+    await guildMember.roles.add(role); // Assign the purchased role to the user
+    await user.save(); // Save the user with the updated Froggie balance and purchased role
+
+    // Notify the user of the successful purchase
+    message.channel.send(
+      `${message.author.username}, you've successfully purchased the ${roleToBuy.name} role for one week!`
+    );
   }
 });
 
