@@ -197,31 +197,49 @@ client.on("messageCreate", async (message) => {
 
   xpCooldowns.set(userId, now);
 
+  // Find or create user
   let user = await Users.findOneAndUpdate(
     { userID: userId },
     { $setOnInsert: { xp: 0, level: 1 } },
     { new: true, upsert: true }
   );
 
-  let newXP = user.xp + Xp_Per_Message;
+  // Default XP per message
+  let xpGain = Xp_Per_Message;
+
+  // Apply XP boost if active
+  if (user.activeXPBoost && now < user.activeXPBoost.expiry) {
+    xpGain *= user.activeXPBoost.multiplier; // Apply XP multiplier boost
+  } else if (user.activeXPBoost && now >= user.activeXPBoost.expiry) {
+    user.activeXPBoost = null; // Remove boost if expired
+    await user.save();
+  }
+
+  // Apply the XP gain (use xpGain with multiplier)
+  let newXP = user.xp + xpGain;
   let newLevel = user.level;
 
+  // Check if user leveled up
   if (newXP >= getNextLevelXP(newLevel)) {
     newLevel++;
     newXP = 0;
 
+    // Calculate Froggie reward
     const FroggieRewards = Math.floor(0.1 * getNextLevelXP(newLevel - 1));
     user.FroggieBalance = (user.FroggieBalance || 0) + FroggieRewards;
 
+    // Announce level up and Froggie rewards
     message.channel.send(
-      ` congrats${message.author.username} you leveled up to level ${newLevel} you now own ${FroggieRewards} frogs ! :frogyippee: •°. *࿐
-`
+      `🎉 Congrats ${message.author.username}! You leveled up to level ${newLevel} and earned ${FroggieRewards} Froggies! 🐸`
     );
   }
+
+  // Update user XP and level
   user.xp = newXP;
   user.level = newLevel;
   await user.save();
 });
+
 client.on("messageCreate", async (message) => {
   if (message.content.startsWith("!rank")) {
     const userId = message.author.id;
@@ -234,11 +252,11 @@ client.on("messageCreate", async (message) => {
 
     if (user.isPrestigeMaster) {
       message.channel.send(
-        `${message.author.username}, you are a **Prestige Master**! 🏆`
+        `${message.author.username}, you are a **Prestige Master**! 🏆 and have ${user.FroggieBalance} Froggies`
       );
     } else {
       message.channel.send(
-        `${message.author.username}, you are level ${user.level} with ${user.xp} XP. Total Prestiges: ${user.prestigeCount}.`
+        `${message.author.username}, you are level ${user.level} with ${user.xp} XP. Total Prestiges: ${user.prestigeCount} with ${user.FroggieBalance} Froggies.`
       );
     }
   }
@@ -330,6 +348,85 @@ client.on("messageCreate", async (message) => {
       message.channel.send(
         `${message.author.username} has prestiged! You are now level ${user.level} with ${user.xp} XP. Total Prestiges: ${user.prestigeCount}.`
       );
+    }
+  }
+});
+
+const shopItem = [
+  {
+    name: "Double XP (10 mins)",
+    type: "XpBoost",
+    multiplier: 2,
+    duration: 10 * 60 * 1000,
+    price: 100,
+  },
+  {
+    name: "Double XP (30 mins)",
+    type: "XpBoost",
+    multiplier: 2,
+    duration: 30 * 60 * 1000,
+    price: 300,
+  },
+  {
+    name: "Triple XP (30 mins)",
+    type: "XpBoost",
+    multiplier: 3,
+    duration: 30 * 60 * 1000,
+    price: 500,
+  },
+];
+
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+
+  // Split message content by spaces, not empty string
+  const args = message.content.split(" ");
+  const command = args[0].toLowerCase();
+
+  if (command === "!buy") {
+    const itemName = args.slice(1).join(" ");
+    const item = shopItem.find(
+      (i) => i.name.toLowerCase() === itemName.toLowerCase()
+    );
+
+    if (!item) {
+      return message.channel.send(
+        `${message.author.username}, the item "${itemName}" does not exist in the shop.`
+      );
+    }
+
+    const userId = message.author.id;
+    let user = await Users.findOne({ userID: userId });
+
+    // Check if user exists and has enough balance
+    if (!user || user.FroggieBalance < item.price) {
+      return message.channel.send(
+        `You do not have enough Froggies to buy the item "${item.name}".`
+      );
+    }
+
+    // Deduct item price from the user's balance
+    user.FroggieBalance -= item.price;
+
+    // If it's an XP boost, activate the boost with duration and multiplier
+    if (item.type === "XpBoost") {
+      const boostExpire = Date.now() + item.duration;
+      user.activeXPBoost = {
+        multiplier: item.multiplier,
+        expiry: boostExpire,
+      };
+
+      await user.save(); // Save user with updated XP boost info
+
+      message.channel.send(
+        `${message.author.username}, your ${
+          item.name
+        } has been activated and will expire in ${
+          item.duration / 1000 / 60
+        } minutes.`
+      );
+    } else {
+      await user.save(); // Just save user if it's not an XP boost
     }
   }
 });
