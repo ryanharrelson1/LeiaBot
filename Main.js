@@ -203,6 +203,16 @@ client.on("messageCreate", async (message) => {
     { new: true, upsert: true }
   );
 
+  let xpGain = Xp_Per_Message;
+
+  if(user.activateXpBoost && now < user.activateXpBoost.expiry){
+    xpGain *= user.activateXpBoost.multiplyer;
+  } else if(user.activateXpBoost && now >= user.activateXpBoost.expiry){
+    user.activateXpBoost = null;
+    await user.save();
+    message.channel.send(`${message.author.username}, your XpBoost has expired.`)
+  }
+
   let newXP = user.xp + Xp_Per_Message;
   let newLevel = user.level;
 
@@ -333,6 +343,59 @@ client.on("messageCreate", async (message) => {
     }
   }
 });
+
+const shopItem =[
+  {name: "Double XP {10min}", price: 300, type: "XpBoost", multiplyer: 2, Durtation: 10 * 60 * 1000},
+  {name: "Double XP {30min}", price: 600, type: "XpBoost", multiplyer: 2, Durtation: 30 * 60 * 1000},
+  {name: "Triple Xp {10min}", price: 1000, type: "XpBoost", multiplyer: 3, Durtation: 10 * 60 * 1000},
+]
+
+client.on("messageCreate", async (message) =>{
+ if(message.author.bot) return;
+
+   const args = message.content.split("");
+   const command = args[0].toLowerCase();
+
+   if(command === "!buy"){
+    const itemName = args.slice(1).join(" ");
+    const item = shopItem.find(i => i.name.toLowerCase() === itemName.toLowerCase());
+
+    if(!item){
+      return message.channel.send(`${message.author.username} the item does not exist or is avaible  in the shop in the item shop `);
+
+    }
+
+    const userid = message.author.id
+
+    let user = await Users.findOne({userID: userid});
+
+    if(!user || user.FroggieBalance < item.price ){
+      return message.channel.send(`you do not have enough froggies to buy thid item ${item.name}.`)
+    }
+
+    user.FroggieBalance -= item.price;
+
+    await user.save();
+
+
+    if(item.type === "XpBoost"){
+      const boostExpire = Date.now() + item.Durtation;
+      user.activateXpBoost = {multiplyer: item.multiplyer, expiry: boostExpire};
+
+      await user.save();
+      message.channel.send(`${message.author.username}, your ${item.name} has been activated and will expire in ${item.Durtation}.`)
+    }
+
+
+
+
+
+   }
+
+ 
+})
+
+
 
 app.get("/", (req, res) => {
   res.send("Bot is running");
