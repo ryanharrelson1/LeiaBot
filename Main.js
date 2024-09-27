@@ -325,9 +325,6 @@ client.on("messageCreate", async (message) => {
   } else if (user.activeXPBoost && now >= user.activeXPBoost.expiry) {
     user.activeXPBoost = null; // Remove boost if expired
     await user.save();
-    message.channel.send(
-      `${message.author.username}, your XpBoost has expired.`
-    );
   }
 
   // Apply the XP gain (use xpGain with multiplier)
