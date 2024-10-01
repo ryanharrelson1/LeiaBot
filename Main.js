@@ -12,7 +12,6 @@ const { InviteMon } = require("./ServerInviteMon.js");
 const express = require("express");
 const { handleAnnounceCommand } = require("./annoucmentHandeler.js");
 const { handleInteraction } = require("./ReportSystem.js");
-const BanCommand = require("./BanCommand.js");
 const ConnectDb = require("./mongoDb/mongoDb.js");
 const { setBirthday, CheckBirhtday } = require("./bdayHandeler.js");
 const {
@@ -54,7 +53,7 @@ const Mod_Role_ID = "1050627718389182555";
 
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
-  CheckBirhtday(client, Guild_ID);
+  CheckBirhtday(client, Guild_ID, BirthDayRole, generalChannelId);
 });
 
 registerCommands(Client_ID, Guild_ID);
@@ -66,77 +65,59 @@ client.on("interactionCreate", async (interaction) => {
 
   const { commandName } = interaction;
 
-  if (commandName === "ban") {
-    await BanCommand(interaction, Mod_Role_ID, LOG_CHANNEL_ID);
+  switch (commandName) {
+    case "announce":
+      await handleAnnounceCommand(interaction, Mod_Role_ID, generalChannelId);
+      break;
+
+    case "setbirthday":
+      await setBirthday(interaction, generalChannelId);
+      break;
+
+    case "report":
+      await handleInteraction(interaction, Mod_Role_ID);
+      break;
+
+    case "closereport":
+      await handleInteraction(interaction, Mod_Role_ID);
+
+    default:
+      break;
   }
 });
+
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
+
   await handleMessage(
     message,
-    LOG_CHANNEL_ID, // This should be first (logChannelId)
-    SPAM_LIMIT, // spamLimit
-    TIME_WINDOW, // timeWindow
-    TIMEOUT_DURATION // timeoutDuration
+    LOG_CHANNEL_ID,
+    SPAM_LIMIT,
+    TIME_WINDOW,
+    TIMEOUT_DURATION
   );
-});
 
-client.on("interactionCreate", async (interaction) => {
-  await handleInteraction(interaction, Mod_Role_ID);
-});
-
-client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isCommand()) return;
-
-  const { commandName } = interaction;
-
-  if (commandName === "announce") {
-    await handleAnnounceCommand(interaction, Mod_Role_ID, generalChannelId);
-  }
-});
-client.on("messageCreate", async (message) => {
-  await InviteMon(message, LOG_CHANNEL_ID); // Pass the constants to the function
-});
-
-client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isCommand()) return;
-  if (interaction.commandName === "setbirthday") {
-    await setBirthday(interaction, Guild_ID, generalChannelId, BirthDayRole);
-  }
-});
-
-CheckBirhtday(client, Guild_ID);
-
-client.on("messageCreate", async (message) => {
   if (message.content.startsWith("!rank")) {
     await HandelRankCheck(message);
-  }
-});
-
-client.on("messageCreate", async (message) => {
-  if (message.content.startsWith("!leaderboard")) {
+  } else if (message.content.startsWith("!leaderboard")) {
     await HandelLeaderBoard(message, client);
-  }
-});
-
-client.on("messageCreate", async (message) => {
-  if (message.content.startsWith("!prestige")) {
+  } else if (message.content.startsWith("!prestige")) {
     const MasterFroggies = Master_Froggie_Role_ID;
     const SUperFroggie = Super_Froggies_Role_ID;
     const Froggie = Froggie_Role_ID;
 
     await Handelprestige(message, MasterFroggies, SUperFroggie, Froggie);
+  } else {
+    const xpGain = Xp_Per_Message;
+    const Xp_CoolDown = 60000;
+
+    await XPandLevelingManager(message, xpGain, Xp_CoolDown);
   }
+
+  await InviteMon(message, LOG_CHANNEL_ID);
 });
 
-client.on("messageCreate", async (message) => {
-  if (message.author.bot) return;
-  const xpGain = Xp_Per_Message;
-
-  const Xp_CoolDown = 60000;
-
-  await XPandLevelingManager(message, xpGain, Xp_CoolDown);
-});
+CheckBirhtday(client, Guild_ID, BirthDayRole, generalChannelId);
 
 app.get("/", (req, res) => {
   res.send("Bot is running");
