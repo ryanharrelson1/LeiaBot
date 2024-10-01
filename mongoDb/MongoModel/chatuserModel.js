@@ -8,11 +8,6 @@ const UserSchema = new mongoose.Schema({
   prestigeCount: { type: Number, default: 0 },
   FroggieBalance: { type: Number, default: 0 },
   isPrestigeMaster: { type: Boolean, default: false },
-
-  purchasedRole: {
-    roleID: { type: String, default: null }, // Role ID the user purchased
-    expiry: { type: Date, default: null }, // Expiry date for the purchased role
-  },
 });
 
 module.exports = mongoose.model("User", UserSchema);

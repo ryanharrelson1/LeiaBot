@@ -1,9 +1,19 @@
-const Genral_CHannel_ID = "944716095531671552";
-
-const handleAnnounceCommand = async (interaction) => {
+const handleAnnounceCommand = async (
+  interaction,
+  Mod_Role_ID,
+  Genral_CHannel_ID
+) => {
   const announcementMessage = interaction.options.getString("message");
   const generalChannel =
     interaction.guild.channels.cache.get(Genral_CHannel_ID);
+  const modRole = interaction.member.roles.cache;
+
+  if (!modRole.has(Mod_Role_ID)) {
+    return interaction.reply({
+      content: "you dont have access to use this command.",
+      ephemeral: true,
+    });
+  }
 
   if (generalChannel) {
     try {

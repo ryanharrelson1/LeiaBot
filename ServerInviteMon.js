@@ -1,10 +1,12 @@
 const WARNING_MAP = new Map();
+const INVITE_REGEX =
+  /https?:\/\/(www\.)?discord(?:app\.com\/invite|\.gg)\/\w+/i;
 
-async function InviteMon(message, inviteRegex, logChannelId) {
+async function InviteMon(message, logChannelId) {
   if (!message.guild || message.author.bot) return;
 
   // Check for server invite links
-  if (inviteRegex.test(message.content)) {
+  if (INVITE_REGEX.test(message.content)) {
     let warnings = WARNING_MAP.get(message.author.id) || 0;
     warnings++;
 

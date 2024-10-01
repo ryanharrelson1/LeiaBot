@@ -46,6 +46,7 @@ module.exports = {
 
     if (commandName === "closereport") {
       const memberRole = interaction.member.roles.cache;
+
       if (!memberRole.has(Mod_Role_ID)) {
         return interaction.reply({
           content: "You do not have permission to close reports.",
