@@ -39,18 +39,7 @@ const commands = [
         .setDescription("announcment message")
         .setRequired(true)
     ),
-  new SlashCommandBuilder()
-    .setName("ban")
-    .setDescription("ban a user")
-    .addUserOption((banop) =>
-      banop.setName("user").setDescription("user to ban").setRequired(true)
-    )
-    .addStringOption((banop) =>
-      banop
-        .setName("reason")
-        .setDescription("reason for the ban ")
-        .setRequired(true)
-    ),
+
   new SlashCommandBuilder()
     .setName("setbirthday")
     .setDescription("set your birthday (MM-DD format")
