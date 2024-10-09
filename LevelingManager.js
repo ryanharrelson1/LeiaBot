@@ -24,13 +24,13 @@ async function XPandLevelingManager(message, xpGain, Xp_CoolDown) {
   );
 
   // Apply the XP gain.
-  let newXP = xpGain;
+  let newXP = user.xp + xpGain;
   let newLevel = user.level;
 
   // Check if user leveled up
   if (newXP >= getNextLevelXP(newLevel)) {
     newLevel++;
-    newXP = 0;
+    newXP -= getNextLevelXP(newLevel);
     user.FroggieBalance += 1;
 
     // Announce level up and Froggie rewards
