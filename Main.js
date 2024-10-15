@@ -1,11 +1,6 @@
 const {
   Client,
   GatewayIntentBits,
-  SlashCommandBuilder,
-  REST,
-  Routes,
-  Events,
-  Collection,
 } = require("discord.js");
 const { handleMessage } = require("./SpamHandeler.js");
 const { InviteMon } = require("./ServerInviteMon.js");
@@ -95,6 +90,7 @@ client.on("messageCreate", async (message) => {
     SPAM_LIMIT,
     TIME_WINDOW,
     TIMEOUT_DURATION
+    
   );
 
   if (message.content.startsWith("!rank")) {
@@ -112,6 +108,9 @@ client.on("messageCreate", async (message) => {
     const Xp_CoolDown = 60000;
 
     await XPandLevelingManager(message, xpGain, Xp_CoolDown);
+    
+     
+     
   }
 
   await InviteMon(message, LOG_CHANNEL_ID);
@@ -119,9 +118,6 @@ client.on("messageCreate", async (message) => {
 
 CheckBirhtday(client, Guild_ID, BirthDayRole, generalChannelId);
 
-app.get("/", (req, res) => {
-  res.send("Bot is running");
-});
 
 app.listen(port, () => {
   ConnectDb();
