@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const UserSchema = new mongoose.Schema({
   userID: { type: String, required: true, unique: true },
@@ -10,4 +10,6 @@ const UserSchema = new mongoose.Schema({
   isPrestigeMaster: { type: Boolean, default: false },
 });
 
-module.exports = mongoose.model("User", UserSchema);
+const User = new mongoose.model("User", UserSchema);
+
+export default User;

@@ -1,6 +1,9 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
-const { REST } = require("@discordjs/rest");
-const { Routes } = require("discord-api-types/v10");
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { REST } from "@discordjs/rest";
+import { Routes } from "discord-api-types/v10";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const Token = process.env.Discord_Token;
 
@@ -52,8 +55,8 @@ const commands = [
 ].map((command) => command.toJSON());
 
 const rest = new REST({ version: "10" }).setToken(Token);
-
-const registerCommands = async (Client_ID, Guild_ID) => {
+const Client_ID = process.env.Client_ID;
+const registerCommands = async (Guild_ID) => {
   try {
     console.log("start init app slash commands");
 
@@ -67,4 +70,4 @@ const registerCommands = async (Client_ID, Guild_ID) => {
   }
 };
 
-module.exports = registerCommands;
+export default registerCommands;

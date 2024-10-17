@@ -1,4 +1,4 @@
-const handleAnnounceCommand = async (
+export const handleAnnounceCommand = async (
   interaction,
   Mod_Role_ID,
   Genral_CHannel_ID
@@ -37,5 +37,3 @@ const handleAnnounceCommand = async (
     });
   }
 };
-
-module.exports = { handleAnnounceCommand };

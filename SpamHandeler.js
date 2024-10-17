@@ -1,6 +1,6 @@
 const spamMap = new Map();
 
-async function handleMessage(
+export async function handleMessage(
   message,
   logChannelId,
   spamLimit,
@@ -59,5 +59,3 @@ async function timeoutUser(message, logChannelId, timeoutDuration) {
     message.channel.send(`Failed to timeout user ${message.author.tag}.`);
   }
 }
-
-module.exports = { handleMessage };

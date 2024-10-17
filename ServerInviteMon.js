@@ -2,7 +2,7 @@ const WARNING_MAP = new Map();
 const INVITE_REGEX =
   /https?:\/\/(www\.)?discord(?:app\.com\/invite|\.gg)\/\w+/i;
 
-async function InviteMon(message, logChannelId) {
+export async function InviteMon(message, logChannelId) {
   if (!message.guild || message.author.bot) return;
 
   // Check for server invite links
@@ -63,5 +63,3 @@ async function InviteMon(message, logChannelId) {
     WARNING_MAP.set(message.author.id, warnings);
   }
 }
-
-module.exports = { InviteMon };

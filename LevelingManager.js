@@ -1,4 +1,4 @@
-const Users = require("./mongoDb/MongoModel/chatuserModel");
+import User from "./mongoDb/MongoModel/chatuserModel.js";
 
 const xpCooldowns = new Map();
 
@@ -6,7 +6,7 @@ function getNextLevelXP(level) {
   return 100 * level ** 2;
 }
 
-async function XPandLevelingManager(message, xpGain, Xp_CoolDown) {
+export async function XPandLevelingManager(message, xpGain, Xp_CoolDown) {
   const userId = message.author.id;
 
   const now = Date.now();
@@ -45,7 +45,7 @@ async function XPandLevelingManager(message, xpGain, Xp_CoolDown) {
   await user.save();
 }
 
-async function Handelprestige(
+export async function Handelprestige(
   message,
   Master_Froggie_Role_ID,
   Super_Froggies_Role_ID,
@@ -55,7 +55,7 @@ async function Handelprestige(
   const guild = message.guild;
   const member = guild.members.cache.get(userId);
 
-  const user = await Users.findOne({ userID: userId });
+  const user = await User.findOne({ userID: userId });
 
   if (!user) {
     return message.channel.send("You haven't earned any XP yet.");
@@ -102,10 +102,10 @@ async function Handelprestige(
   }
 }
 
-async function HandelRankCheck(message) {
+export async function HandelRankCheck(message) {
   const userId = message.author.id;
 
-  const user = await Users.findOne({ userID: userId });
+  const user = await User.findOne({ userID: userId });
 
   if (!user) {
     return message.channel.send("you have not earned any XP yet");
@@ -122,7 +122,7 @@ async function HandelRankCheck(message) {
   }
 }
 
-async function HandelLeaderBoard(message, client) {
+export async function HandelLeaderBoard(message, client) {
   const allUsers = await Users.find();
 
   // Sort by isPrestigeMaster first, then prestigeCount, then level, and finally XP
@@ -152,11 +152,3 @@ async function HandelLeaderBoard(message, client) {
 
   message.channel.send(leaderboard);
 }
-
-module.exports = {
-  getNextLevelXP,
-  XPandLevelingManager,
-  Handelprestige,
-  HandelRankCheck,
-  HandelLeaderBoard,
-};

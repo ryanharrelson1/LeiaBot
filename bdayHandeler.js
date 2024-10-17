@@ -1,6 +1,6 @@
-const Birthday = require("./mongoDb/MongoModel/bdayModel.js");
+import Birthday from "./mongoDb/MongoModel/bdayModel.js";
 
-async function setBirthday(interaction) {
+export async function setBirthday(interaction) {
   const birthday = interaction.options.getString("date");
   const userId = interaction.user.id;
 
@@ -30,7 +30,7 @@ async function setBirthday(interaction) {
   }
 }
 
-async function CheckBirhtday(
+export async function CheckBirhtday(
   client,
   Guild_ID,
   birthdayRole,
@@ -92,5 +92,3 @@ async function CheckBirhtday(
     86400000
   );
 }
-
-module.exports = { setBirthday, CheckBirhtday };

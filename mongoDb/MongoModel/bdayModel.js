@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const birthdaySchema = new mongoose.Schema({
   userId: {
@@ -11,4 +11,6 @@ const birthdaySchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Birthday", birthdaySchema);
+const Birthday = new mongoose.model("Birhtday", birthdaySchema);
+
+export default Birthday;
