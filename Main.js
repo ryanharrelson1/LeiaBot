@@ -17,11 +17,12 @@ import registerCommands from "./RegisterCommands.js";
 import Discord from "./Backend/routes/DiscordRoute.js";
 import Admins from "./Backend/routes/AdminRoutes.js";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Parses URL-encoded data (form data)
-
+app.use(cookieParser());
 app.use(cors());
 
 const port = process.env.Port || 3000;

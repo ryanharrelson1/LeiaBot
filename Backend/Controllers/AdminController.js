@@ -1,5 +1,6 @@
 import Admin from "../../mongoDb/MongoModel/AdminModel.js";
 import bcrypt from "bcrypt";
+import GenToken from "../utils/GenToken.js";
 
 export const Login = async (req, res) => {
   const { Username, Password } = req.body;
@@ -13,6 +14,8 @@ export const Login = async (req, res) => {
     if (!user || !ismatch) {
       return res.status(401).json({ message: "Invalid password or username" });
     }
+
+    GenToken(user.DiscordID, res);
 
     res.status(200).json({
       user: user.Username,
