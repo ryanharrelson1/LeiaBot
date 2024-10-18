@@ -23,7 +23,12 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Parses URL-encoded data (form data)
 app.use(cookieParser());
-app.use(cors());
+
+const corsOptions = {
+  origin: "http://localhost:3000", // frontend URL
+  credentials: true, // Allow credentials (cookies, authorization headers)
+};
+app.use(cors(corsOptions));
 
 const port = process.env.Port || 3000;
 

@@ -9,7 +9,7 @@ export const GenToken = (discordid, res) => {
     httpOnly: true,
     sameSite: "Strict",
     maxAge: 3 * 60 * 60 * 1000,
-    secure: process.env.NODE_ENV === "development",
+    secure: false,
   });
 };
 
