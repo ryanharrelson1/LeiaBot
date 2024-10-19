@@ -1,7 +1,9 @@
 import express from "express";
-import { Login } from "../Controllers/AdminController.js";
+import { Login, Logout } from "../Controllers/AdminController.js";
 const router = express.Router();
 
 router.post("/login", Login);
+
+router.post("/logout", Logout);
 
 export default router;
