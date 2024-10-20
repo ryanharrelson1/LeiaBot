@@ -5,7 +5,7 @@ export const GenToken = (discordid, res) => {
     expiresIn: "3h",
   });
 
-  res.cookie("token", token, {
+  res.cookie("key", token, {
     httpOnly: true,
     sameSite: "Strict",
     maxAge: 3 * 60 * 60 * 1000,
