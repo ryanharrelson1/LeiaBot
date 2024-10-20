@@ -66,10 +66,15 @@ registerCommands(Guild_ID);
 
 client.login(Token);
 
+
 app.listen(port, () => {
   ConnectDb();
   console.log(`fuck you htttp request on port ${port}`);
 });
+app.use((req, res, next) => {
+  req.DiscordClient = client;
+  next();
+})
 
 app.use("/auth", Discord);
 app.use("/admin", Admins);

@@ -1,5 +1,5 @@
 import express from "express";
-import { Login, Logout, SessionValid } from "../Controllers/AdminController.js";
+import { Logout,Login, SessionValid } from "../controllers/AdminController.js";
 import { ProtectedRoute } from "../utils/ProtectedRoute.js";
 const router = express.Router();
 

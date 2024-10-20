@@ -1,14 +1,19 @@
 import Admin from "../../mongoDb/MongoModel/AdminModel.js";
 import bcrypt from "bcrypt";
 import GenToken from "../utils/GenToken.js";
-import { messageLink } from "discord.js";
+
 
 export const Login = async (req, res) => {
   const { Username, Password } = req.body;
-  console.log(Username, Password);
+  
   try {
-    const user = await Admin.findOne({ Username });
+   const user = await Admin.findOne({Username});
     console.log(user);
+    if(!user)
+      {
+       return res.status(404).json({error:"user not found"})
+      }
+    
 
     const ismatch = await bcrypt.compare(Password, user.Password || "");
 
