@@ -2,6 +2,8 @@ import axios from "axios";
 import crypto from "crypto";
 import Admin from "../../mongoDb/MongoModel/AdminModel.js";
 import bcrypt from "bcrypt";
+import { ChannelType } from "discord.js"; // Discord v14
+import ServerConfig from "../../mongoDb/MongoModel/ServerConfigModel.js";
 
 export const DiscordAuth = async (req, res) => {
   const DiscordAuthUrl =
@@ -91,12 +93,67 @@ export const DiscordCallback = async (req, res) => {
 
 export const GetServerChannelsAndRoles = async (req, res) => {
   try {
-
     const client = req.DiscordClient;
-    
+    const guildId = process.env.Guild_ID;
+    const guild = await client.guilds.fetch(guildId);
+
+    const textChannel = guild.channels.cache
+      .filter((channel) => channel.type === ChannelType.GuildText) // For v14+
+      .map((channel) => ({ id: channel.id, name: channel.name }));
+
+    const roles = guild.roles.cache.map((role) => ({
+      id: role.id,
+      name: role.name,
+    }));
+
+    res.status(200).json({
+      textChannel,
+      roles,
+    });
   } catch (error) {
-    
+    console.error("error fetching Discord data", error);
+    res.status(500).json({
+      error: "there was a server error in fetching the roles and channels.",
+    });
   }
+};
 
+export const UpdateConfigFile = async (req, res) => {
+  const GUILD_ID = "782864366763900948"; // Set your guild ID
 
-}
+  try {
+    const { updates } = req.body; // Destructure updates from the request body
+    console.log("Received updates:", updates);
+
+    // Validate updates
+    if (!updates || typeof updates !== "object") {
+      return res
+        .status(400)
+        .json({ message: "Updates must be a non-null object." });
+    }
+
+    const config = await ServerConfig.findOne({ guildid: GUILD_ID });
+
+    if (!config) {
+      return res.status(404).json({ message: "Configuration not found" });
+    }
+
+    // Update only the provided fields
+    Object.keys(updates).forEach((key) => {
+      if (config[key] !== undefined) {
+        // Only update if the key exists
+        config[key] = updates[key];
+      }
+    });
+
+    await config.save(); // Save the updated configuration
+    return res
+      .status(200)
+      .json({ message: "Configuration updated successfully" });
+  } catch (error) {
+    console.error("Error updating server configuration:", error);
+    return res
+      .status(500)
+      .json({ message: "Error updating configuration", error: error.message });
+  }
+};

@@ -1,8 +1,10 @@
 const reports = {};
 
-const Report_Channel_ID = "1281039175411433515";
-
-export const handleInteraction = async (interaction, Mod_Role_ID) => {
+export const handleInteraction = async (
+  interaction,
+  Mod_Role_ID,
+  Report_Channel_ID
+) => {
   if (!interaction.isCommand()) return;
 
   const { commandName, options } = interaction;

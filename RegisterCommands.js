@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
 import dotenv from "dotenv";
+import ServerConfig from "./mongoDb/MongoModel/ServerConfigModel.js";
 
 dotenv.config();
 
@@ -56,14 +57,26 @@ const commands = [
 
 const rest = new REST({ version: "10" }).setToken(Token);
 const Client_ID = process.env.Client_ID;
-const registerCommands = async (Guild_ID) => {
+const registerCommands = async () => {
   try {
-    console.log("start init app slash commands");
+    const guildConfigs = await ServerConfig.find(); // Fetches all guilds from the database
 
-    await rest.put(Routes.applicationGuildCommands(Client_ID, Guild_ID), {
-      body: commands,
-    });
+    for (const config of guildConfigs) {
+      const Guild_ID = config.guildid; // Get the guild ID from the database
 
+      if (Guild_ID) {
+        console.log(`Registering commands for guild: ${Guild_ID}`);
+
+        // Register the commands for the specific guild
+        await rest.put(Routes.applicationGuildCommands(Client_ID, Guild_ID), {
+          body: commands,
+        });
+
+        console.log(`Successfully registered commands for guild: ${Guild_ID}`);
+      } else {
+        console.error("Guild ID not found in the database for config:", config);
+      }
+    }
     console.log("success");
   } catch (error) {
     console.error(error);

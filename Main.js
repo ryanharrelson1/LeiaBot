@@ -13,11 +13,14 @@ import {
   HandelLeaderBoard,
 } from "./LevelingManager.js";
 import dotenv from "dotenv";
-import registerCommands from "./RegisterCommands.js";
+
 import Discord from "./Backend/routes/DiscordRoute.js";
 import Admins from "./Backend/routes/AdminRoutes.js";
 import cors from "cors";
+import { OnBotJoin } from "./BotConfigHandler.js";
 import cookieParser from "cookie-parser";
+import getServerConfig from "./configService.js";
+
 dotenv.config();
 const app = express();
 app.use(express.json());
@@ -43,29 +46,42 @@ const client = new Client({
 const Token = process.env.Discord_Token;
 
 // to be deleted hardcoded Data not final Production code{--------------------
-const LOG_CHANNEL_ID = "1279637632653070427";
-const SPAM_LIMIT = 4;
+//const LOG_CHANNEL_ID = "1279637632653070427";
+///const SPAM_LIMIT = 4;
 const TIME_WINDOW = 3000; // 3 seconds
-const TIMEOUT_DURATION = 60 * 1000; // 1 minute
-const Guild_ID = "782864366763900948";
-const BirthDayRole = "1286431218614796359";
-const generalChannelId = "944716095531671552";
-const Xp_Per_Message = 10;
-const Super_Froggies_Role_ID = "1288632533717880832";
-const Master_Froggie_Role_ID = "1288633108312096890";
+//const TIMEOUT_DURATION = 60 * 1000; // 1 minute
+//const Guild_ID = "782864366763900948";
+//const BirthDayRole = "1286431218614796359";
+//const generalChannelId = "944716095531671552";
+//const Xp_Per_Message = 10;
+//const Super_Froggies_Role_ID = "1288632533717880832";
+//const Master_Froggie_Role_ID = "1288633108312096890";
 const Froggie_Role_ID = "782900478265524245";
 const Mod_Role_ID = "1050627718389182555";
 //-------------------------------------------------------}
+let serverConfig; // Variable to store the server configuration
 
-client.once("ready", () => {
+client.once("ready", async () => {
   console.log(`Logged in as ${client.user.tag}!`);
-  CheckBirhtday(client, Guild_ID, BirthDayRole, generalChannelId);
+
+  const guildId = "782864366763900948"; // Replace with the appropriate guild ID
+  serverConfig = await getServerConfig(guildId); // Fetch server configuration
+
+  if (serverConfig) {
+    console.log("Server Configuration Loaded:", serverConfig);
+    // Call any other startup functions you need, e.g. CheckBirthdays
+    CheckBirhtday(
+      client,
+      serverConfig.guildid,
+      serverConfig.bdayrole,
+      serverConfig.generalChannelId
+    );
+  } else {
+    console.error("Failed to load server configuration.");
+  }
 });
 
-registerCommands(Guild_ID);
-
 client.login(Token);
-
 
 app.listen(port, () => {
   ConnectDb();
@@ -74,7 +90,7 @@ app.listen(port, () => {
 app.use((req, res, next) => {
   req.DiscordClient = client;
   next();
-})
+});
 
 app.use("/auth", Discord);
 app.use("/admin", Admins);
@@ -86,15 +102,23 @@ client.on("interactionCreate", async (interaction) => {
 
   switch (commandName) {
     case "announce":
-      await handleAnnounceCommand(interaction, Mod_Role_ID, generalChannelId);
+      await handleAnnounceCommand(
+        interaction,
+        Mod_Role_ID,
+        serverConfig.annoucmentchannel
+      );
       break;
 
     case "setbirthday":
-      await setBirthday(interaction, generalChannelId);
+      await setBirthday(interaction, serverConfig.annoucmentchannel);
       break;
 
     case "report":
-      await handleInteraction(interaction, Mod_Role_ID);
+      await handleInteraction(
+        interaction,
+        Mod_Role_ID,
+        serverConfig.reportchannel
+      );
       break;
 
     case "closereport":
@@ -104,16 +128,20 @@ client.on("interactionCreate", async (interaction) => {
       break;
   }
 });
+client.on("guildCreate", async (guild) => {
+  console.log(`Joined a new guild: ${guild.name}`);
+  await OnBotJoin(guild);
+});
 
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
   await handleMessage(
     message,
-    LOG_CHANNEL_ID,
-    SPAM_LIMIT,
+    serverConfig.spamlog,
+    serverConfig.maxspam,
     TIME_WINDOW,
-    TIMEOUT_DURATION
+    serverConfig.timedurt
   );
 
   if (message.content.startsWith("!rank")) {
@@ -121,19 +149,19 @@ client.on("messageCreate", async (message) => {
   } else if (message.content.startsWith("!leaderboard")) {
     await HandelLeaderBoard(message, client);
   } else if (message.content.startsWith("!prestige")) {
-    const MasterFroggies = Master_Froggie_Role_ID;
-    const SUperFroggie = Super_Froggies_Role_ID;
+    const MasterFroggies = serverConfig.masterprestigerole;
+    const SUperFroggie = serverConfig.midprestigerole;
     const Froggie = Froggie_Role_ID;
 
     await Handelprestige(message, MasterFroggies, SUperFroggie, Froggie);
   } else {
-    const xpGain = Xp_Per_Message;
+    const xpGain = serverConfig.xppermessage;
     const Xp_CoolDown = 60000;
 
     await XPandLevelingManager(message, xpGain, Xp_CoolDown);
   }
 
-  await InviteMon(message, LOG_CHANNEL_ID);
+  await InviteMon(message, serverConfig.monlog);
 });
 
-CheckBirhtday(client, Guild_ID, BirthDayRole, generalChannelId);
+//CheckBirhtday(client, serverConfig.guildid, BirthDayRole, generalChannelId);

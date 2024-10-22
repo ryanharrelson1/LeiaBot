@@ -2,7 +2,8 @@ import express from "express";
 import {
   DiscordAuth,
   DiscordCallback,
-  GetServerChannelsAndRoles
+  GetServerChannelsAndRoles,
+  UpdateConfigFile,
 } from "../Controllers/DiscordController.js";
 import { ProtectedRoute } from "../utils/ProtectedRoute.js";
 
@@ -12,6 +13,8 @@ router.get("/discord", DiscordAuth);
 
 router.get("/discord/callback", DiscordCallback);
 
-router.get("discord/guild", ProtectedRoute, GetServerChannelsAndRoles)
+router.get("/discord/guild", GetServerChannelsAndRoles);
+
+router.put("/discord/update-config", UpdateConfigFile);
 
 export default router;

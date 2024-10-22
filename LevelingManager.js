@@ -17,15 +17,20 @@ export async function XPandLevelingManager(message, xpGain, Xp_CoolDown) {
   xpCooldowns.set(userId, now);
 
   // Find or create user
-  let user = await Users.findOneAndUpdate(
+  let user = await User.findOneAndUpdate(
     { userID: userId },
     { $setOnInsert: { xp: 0, level: 1 } },
     { new: true, upsert: true }
   );
 
+  // Ensure both user.xp and xpGain are treated as numbers
+  let currentXP = Number(user.xp); // Convert current XP to a number
+  let gain = Number(xpGain); // Convert xpGain to a number
+
   // Apply the XP gain.
-  let newXP = user.xp + xpGain;
+  let newXP = currentXP + gain;
   let newLevel = user.level;
+  console.log(newXP, "this right");
 
   // Check if user leveled up
   if (newXP >= getNextLevelXP(newLevel)) {
