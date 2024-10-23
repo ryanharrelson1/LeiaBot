@@ -157,3 +157,41 @@ export const UpdateConfigFile = async (req, res) => {
       .json({ message: "Error updating configuration", error: error.message });
   }
 };
+
+export const GetLogChannelMessages = async (req, res) => {
+  const guildid = process.env.Guild_ID;
+
+  try {
+    const client = req.DiscordClient;
+
+    const serverConfig = await serverConfig.findOne({ guildid: guildid });
+
+    if (!serverConfig || !serverConfig.logchannel) {
+      return res.status(404).json({ message: "Log channel is not set." });
+    }
+
+    const channelId = serverConfig.logchannel;
+
+    const channel = await client.channels.fetch(channelId);
+
+    if (!channel || channel.type !== ChannelType.GuildText) {
+      return res
+        .status(404)
+        .json({ message: "Channel not found or not a text channel." });
+    }
+
+    const messages = await channel.messages.fetch({ limit: 50 });
+
+    const logs = messages.map((msg) => ({
+      id: msg.id,
+      content: msg.content,
+      author: msg.author.username,
+      createdAt: msg.createdAt,
+    }));
+
+    res.status(200).json({ logs });
+  } catch (error) {
+    console.error("Error fetching log messages:", error);
+    res.status(500).json({ message: "Failed to fetch log messages." });
+  }
+};

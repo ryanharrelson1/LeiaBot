@@ -4,6 +4,7 @@ import {
   DiscordCallback,
   GetServerChannelsAndRoles,
   UpdateConfigFile,
+  GetLogChannelMessages,
 } from "../Controllers/DiscordController.js";
 import { ProtectedRoute } from "../utils/ProtectedRoute.js";
 
@@ -16,5 +17,7 @@ router.get("/discord/callback", DiscordCallback);
 router.get("/discord/guild", GetServerChannelsAndRoles);
 
 router.put("/discord/update-config", UpdateConfigFile);
+
+router.get("/discord/get-log-messages", GetLogChannelMessages);
 
 export default router;
