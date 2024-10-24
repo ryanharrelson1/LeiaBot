@@ -28,7 +28,7 @@ app.use(express.urlencoded({ extended: true })); // Parses URL-encoded data (for
 app.use(cookieParser());
 
 const corsOptions = {
-  origin: "http://localhost:3000", // frontend URL
+  origin: "https://leiabotdashboard.onrender.com", // frontend URL
   credentials: true, // Allow credentials (cookies, authorization headers)
 };
 app.use(cors(corsOptions));
