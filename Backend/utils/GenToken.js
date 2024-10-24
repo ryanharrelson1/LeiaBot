@@ -7,10 +7,9 @@ export const GenToken = (discordid, res) => {
 
   res.cookie("key", token, {
     httpOnly: true,
-    sameSite: "Strict",
+    sameSite: "None",
     maxAge: 3 * 60 * 60 * 1000,
     secure: process.env.NODE_ENV === "production",
-    domain: "onrender.com",
   });
 };
 
