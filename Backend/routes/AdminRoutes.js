@@ -1,10 +1,10 @@
 import express from "express";
 import {
-  Logout,
   Login,
+  Logout,
   SessionValid,
   ChangePassword,
-} from "../controllers/AdminController.js";
+} from "../Controllers/AdminController.js";
 import { ProtectedRoute } from "../utils/ProtectedRoute.js";
 
 const router = express.Router();
