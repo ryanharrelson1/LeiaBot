@@ -14,7 +14,6 @@ export const DiscordAuth = async (req, res) => {
 export const DiscordCallback = async (req, res) => {
   try {
     const code = req.query.code;
-    console.log(code);
 
     // Exchange the authorization code for an access token
     const tokenResponse = await axios.post(
@@ -30,7 +29,7 @@ export const DiscordCallback = async (req, res) => {
 
     const accessToken = tokenResponse.data.access_token;
     const botToken = process.env.Discord_Token;
-    res.redirect("http://localhost:3000/sign-in");
+
     // Fetch the user's information
     const userResponse = await axios.get("https://discord.com/api/users/@me", {
       headers: {
@@ -43,9 +42,9 @@ export const DiscordCallback = async (req, res) => {
     const username = userResponse.data.username;
 
     const tempPassword = crypto.randomBytes(8).toString("hex");
-
     const hashpassword = await bcrypt.hash(tempPassword, salt);
 
+    // Store user information in the database
     await Admin.create({
       Username: username,
       Password: hashpassword,
@@ -54,18 +53,19 @@ export const DiscordCallback = async (req, res) => {
 
     // Create a DM channel with the user
     const dmChannel = await axios.post(
-      `https://discord.com/api/v10/users/@me/channels`, // Correct endpoint
+      `https://discord.com/api/v10/users/@me/channels`,
       {
-        recipient_id: userId, // Include recipient_id in the body directly
+        recipient_id: userId,
       },
       {
         headers: {
-          Authorization: `Bot ${botToken}`, // Use the access token correctly
-          "Content-Type": "application/json", // Ensure the content type is set
+          Authorization: `Bot ${botToken}`,
+          "Content-Type": "application/json",
         },
       }
     );
-    const channelID = dmChannel.data.id; // Access the id correctly
+
+    const channelID = dmChannel.data.id;
 
     // Send a message to the DM channel
     await axios.post(
@@ -75,18 +75,20 @@ export const DiscordCallback = async (req, res) => {
       },
       {
         headers: {
-          Authorization: `Bot ${botToken}`, // Include the access token
+          Authorization: `Bot ${botToken}`,
         },
       }
     );
 
-    res.send("Temporary credentials sent to your DM!");
+    // Redirect or send a final response
+    res.redirect("http://localhost:3000/sign-in"); // Final response, only one response should be sent
   } catch (error) {
     console.error("Error in Discord callback:", {
       message: error.response ? error.response.data : error.message,
       status: error.response ? error.response.status : "No status",
       config: error.config,
     });
+    // Send error response
     res.status(500).send("An error occurred while processing your request.");
   }
 };
@@ -164,7 +166,7 @@ export const GetLogChannelMessages = async (req, res) => {
   try {
     const client = req.DiscordClient;
 
-    const serverConfig = await serverConfig.findOne({ guildid: guildid });
+    const serverConfig = await ServerConfig.findOne({ guildid: guildid });
 
     if (!serverConfig || !serverConfig.logchannel) {
       return res.status(404).json({ message: "Log channel is not set." });

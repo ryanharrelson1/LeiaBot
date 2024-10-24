@@ -45,20 +45,10 @@ const client = new Client({
 });
 const Token = process.env.Discord_Token;
 
-// to be deleted hardcoded Data not final Production code{--------------------
-//const LOG_CHANNEL_ID = "1279637632653070427";
-///const SPAM_LIMIT = 4;
 const TIME_WINDOW = 3000; // 3 seconds
-//const TIMEOUT_DURATION = 60 * 1000; // 1 minute
-//const Guild_ID = "782864366763900948";
-//const BirthDayRole = "1286431218614796359";
-//const generalChannelId = "944716095531671552";
-//const Xp_Per_Message = 10;
-//const Super_Froggies_Role_ID = "1288632533717880832";
-//const Master_Froggie_Role_ID = "1288633108312096890";
 const Froggie_Role_ID = "782900478265524245";
 const Mod_Role_ID = "1050627718389182555";
-//-------------------------------------------------------}
+
 let serverConfig; // Variable to store the server configuration
 
 client.once("ready", async () => {
@@ -68,7 +58,6 @@ client.once("ready", async () => {
   serverConfig = await getServerConfig(guildId); // Fetch server configuration
 
   if (serverConfig) {
-    console.log("Server Configuration Loaded:", serverConfig);
     // Call any other startup functions you need, e.g. CheckBirthdays
     CheckBirhtday(
       client,

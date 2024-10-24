@@ -15,6 +15,11 @@ const AdminSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+
+  isTempPassword: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const Admin = new mongoose.model("Admin", AdminSchema);
